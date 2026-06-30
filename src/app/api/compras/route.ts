@@ -4,6 +4,7 @@ import { z } from 'zod';
 
 const compraSchema = z.object({
   proveedorId: z.string().uuid(),
+  tipoInsumo: z.string().min(1).default('cafe_pergamino'),
   fecha: z.string(),
   cantidadKg: z.coerce.number().positive(),
   precioKg: z.coerce.number().positive(),
@@ -38,6 +39,7 @@ export async function POST(req: NextRequest) {
     const compra = await prisma.compraPergamino.create({
       data: {
         proveedorId: data.proveedorId,
+        tipoInsumo: data.tipoInsumo,
         fecha: new Date(data.fecha),
         cantidadKg: data.cantidadKg,
         precioKg: data.precioKg,
