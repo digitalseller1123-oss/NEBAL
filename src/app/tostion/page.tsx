@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-type Compra = { id: string; codigoLoteInterno: string; cantidad: string; proveedor: { nombre: string } };
+type Compra = { id: string; codigoLoteInterno: string; cantidadKg: string; tipoInsumo: string; proveedor: { nombre: string } };
 type Orden = {
   id: string;
   fechaEnvio: string;
