@@ -4,10 +4,13 @@ import { z } from 'zod';
 
 const proveedorSchema = z.object({
   nombre: z.string().min(1),
+  tipo: z.string().min(1),
   finca: z.string().optional(),
   municipio: z.string().optional(),
   departamento: z.string().optional(),
   telefono: z.string().optional(),
+  email: z.string().optional(),
+  notas: z.string().optional(),
 });
 
 export async function GET() {
