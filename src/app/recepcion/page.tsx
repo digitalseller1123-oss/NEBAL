@@ -38,7 +38,7 @@ export default function RecepcionPage() {
       fetch('/api/tostion').then((r) => r.json()),
     ]);
     setRecepciones(r);
-    setOrdenes(o.filter((x: Orden) => !x['recepcion' as any]));
+    setOrdenes(o.filter((x: Orden) => !(x as any)['recepcion']));
   }
 
   useEffect(() => {
