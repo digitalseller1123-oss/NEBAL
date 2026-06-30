@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from 'react';
 
-type Proveedor = { id: string; nombre: string };
+type Proveedor = { id: string; nombre: string; tipo: string };
 type Compra = {
   id: string;
   fecha: string;
+  tipoInsumo: string;
   cantidadKg: string;
   precioKg: string;
   costoTotal: string;
@@ -13,12 +14,24 @@ type Compra = {
   proveedor: Proveedor;
 };
 
+const TIPOS_INSUMO = [
+  { value: 'cafe_pergamino', label: 'Café pergamino' },
+  { value: 'empaques', label: 'Empaques / bolsas' },
+  { value: 'etiquetas', label: 'Etiquetas' },
+  { value: 'otro', label: 'Otro insumo' },
+];
+
+function tipoLabel(value: string) {
+  return TIPOS_INSUMO.find((t) => t.value === value)?.label || value;
+}
+
 export default function ComprasPage() {
   const [compras, setCompras] = useState<Compra[]>([]);
   const [proveedores, setProveedores] = useState<Proveedor[]>([]);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     proveedorId: '',
+    tipoInsumo: 'cafe_pergamino',
     fecha: new Date().toISOString().slice(0, 10),
     cantidadKg: '',
     precioKg: '',
@@ -61,15 +74,33 @@ export default function ComprasPage() {
     }
   }
 
+  const esCafe = form.tipoInsumo === 'cafe_pergamino';
+  const proveedoresDelTipo = proveedores.filter((p) => p.tipo === form.tipoInsumo);
+
   return (
     <div>
-      <h1 className="mb-1 text-2xl font-semibold">Compras de café pergamino</h1>
+      <h1 className="mb-1 text-2xl font-semibold">Compras</h1>
       <p className="mb-8 text-sm text-neutral-400">
-        Punto de entrada de la trazabilidad: cada compra origina un lote.
+        Registra compras de café, empaques, etiquetas o cualquier otro insumo. Cada compra de café origina un lote para trazabilidad.
       </p>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[380px_1fr]">
         <form onSubmit={onSubmit} className="card flex flex-col gap-3">
+          <div>
+            <label className="mb-1 block text-xs text-neutral-400">Tipo de insumo</label>
+            <select
+              className="input"
+              value={form.tipoInsumo}
+              onChange={(e) => setForm({ ...form, tipoInsumo: e.target.value, proveedorId: '' })}
+            >
+              {TIPOS_INSUMO.map((t) => (
+                <option key={t.value} value={t.value}>
+                  {t.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <div>
             <label className="mb-1 block text-xs text-neutral-400">Proveedor</label>
             <select
@@ -79,15 +110,15 @@ export default function ComprasPage() {
               onChange={(e) => setForm({ ...form, proveedorId: e.target.value })}
             >
               <option value="">Selecciona...</option>
-              {proveedores.map((p) => (
+              {proveedoresDelTipo.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.nombre}
                 </option>
               ))}
             </select>
-            {proveedores.length === 0 && (
+            {proveedoresDelTipo.length === 0 && (
               <p className="mt-1 text-xs text-amber-500">
-                No hay proveedores aún. Créalos primero vía POST /api/proveedores.
+                No hay proveedores de este tipo aún. Créalo primero en Proveedores.
               </p>
             )}
           </div>
@@ -105,7 +136,9 @@ export default function ComprasPage() {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="mb-1 block text-xs text-neutral-400">Cantidad (kg)</label>
+              <label className="mb-1 block text-xs text-neutral-400">
+                {esCafe ? 'Cantidad (kg)' : 'Cantidad'}
+              </label>
               <input
                 type="number"
                 step="0.01"
@@ -116,7 +149,7 @@ export default function ComprasPage() {
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs text-neutral-400">Precio / kg</label>
+              <label className="mb-1 block text-xs text-neutral-400">Precio unitario</label>
               <input
                 type="number"
                 step="0.01"
@@ -129,34 +162,36 @@ export default function ComprasPage() {
           </div>
 
           <div>
-            <label className="mb-1 block text-xs text-neutral-400">Código de lote interno</label>
+            <label className="mb-1 block text-xs text-neutral-400">Código de lote / referencia interna</label>
             <input
               required
               className="input"
-              placeholder="P24001"
+              placeholder={esCafe ? 'P24001' : 'E24001'}
               value={form.codigoLoteInterno}
               onChange={(e) => setForm({ ...form, codigoLoteInterno: e.target.value })}
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="mb-1 block text-xs text-neutral-400">Variedad</label>
-              <input
-                className="input"
-                value={form.variedad}
-                onChange={(e) => setForm({ ...form, variedad: e.target.value })}
-              />
+          {esCafe && (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="mb-1 block text-xs text-neutral-400">Variedad</label>
+                <input
+                  className="input"
+                  value={form.variedad}
+                  onChange={(e) => setForm({ ...form, variedad: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs text-neutral-400">Proceso</label>
+                <input
+                  className="input"
+                  value={form.proceso}
+                  onChange={(e) => setForm({ ...form, proceso: e.target.value })}
+                />
+              </div>
             </div>
-            <div>
-              <label className="mb-1 block text-xs text-neutral-400">Proceso</label>
-              <input
-                className="input"
-                value={form.proceso}
-                onChange={(e) => setForm({ ...form, proceso: e.target.value })}
-              />
-            </div>
-          </div>
+          )}
 
           <div>
             <label className="mb-1 block text-xs text-neutral-400">Observaciones</label>
@@ -177,10 +212,11 @@ export default function ComprasPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-[#262626] text-left text-neutral-400">
-                <th className="pb-2">Lote</th>
+                <th className="pb-2">Lote / Ref.</th>
+                <th className="pb-2">Tipo</th>
                 <th className="pb-2">Proveedor</th>
                 <th className="pb-2">Fecha</th>
-                <th className="pb-2">Kg</th>
+                <th className="pb-2">Cantidad</th>
                 <th className="pb-2">Costo total</th>
               </tr>
             </thead>
@@ -188,6 +224,7 @@ export default function ComprasPage() {
               {compras.map((c) => (
                 <tr key={c.id} className="border-b border-[#1a1a1a]">
                   <td className="py-2 font-mono text-xs">{c.codigoLoteInterno}</td>
+                  <td className="py-2">{tipoLabel(c.tipoInsumo)}</td>
                   <td className="py-2">{c.proveedor?.nombre}</td>
                   <td className="py-2">{new Date(c.fecha).toLocaleDateString('es-CO')}</td>
                   <td className="py-2">{c.cantidadKg}</td>
@@ -196,7 +233,7 @@ export default function ComprasPage() {
               ))}
               {compras.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="py-6 text-center text-neutral-500">
+                  <td colSpan={6} className="py-6 text-center text-neutral-500">
                     Aún no hay compras registradas.
                   </td>
                 </tr>
