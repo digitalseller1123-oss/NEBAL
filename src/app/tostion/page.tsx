@@ -87,7 +87,7 @@ export default function TostionPage() {
               onChange={(e) => setForm({ ...form, compraId: e.target.value })}
             >
               <option value="">Selecciona...</option>
-              {compras.map((c) => (
+              {compras.filter((c) => c.tipoInsumo === 'cafe_pergamino').map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.codigoLoteInterno} — {c.proveedor.nombre} ({c.cantidadKg}kg)
                 </option>
