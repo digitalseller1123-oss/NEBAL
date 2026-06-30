@@ -1,0 +1,10 @@
+# Despliegue recomendado: la app (Next.js) en Vercel, la base de datos en Render.
+# Esto crea solo el servicio de Postgres administrado en Render.
+# Copia la "Internal/External Database URL" que genera Render a la variable
+# DATABASE_URL en Vercel (Project Settings → Environment Variables).
+
+databases:
+  - name: nebal-erp-db
+    plan: free
+    databaseName: nebal_erp
+    user: nebal_admin
