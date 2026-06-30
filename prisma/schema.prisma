@@ -33,6 +33,7 @@ model CompraPergamino {
   id                String   @id @default(uuid())
   proveedorId       String   @map("proveedor_id")
   proveedor         Proveedor @relation(fields: [proveedorId], references: [id])
+  tipoInsumo        String   @default("cafe_pergamino") @map("tipo_insumo")
   fecha             DateTime
   cantidadKg        Decimal  @map("cantidad_kg") @db.Decimal(10, 2)
   precioKg          Decimal  @map("precio_kg") @db.Decimal(10, 2)
