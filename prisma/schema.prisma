@@ -1,0 +1,226 @@
+// ============================================================
+// NEBAL CAFÉ ERP — Schema Fase 1 (Núcleo operativo)
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Proveedor {
+  id           String   @id @default(uuid())
+  nombre       String
+  finca        String?
+  municipio    String?
+  departamento String?
+  telefono     String?
+  notas        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  compras CompraPergamino[]
+
+  @@map("proveedores")
+}
+
+model CompraPergamino {
+  id                String   @id @default(uuid())
+  proveedorId       String   @map("proveedor_id")
+  proveedor         Proveedor @relation(fields: [proveedorId], references: [id])
+  fecha             DateTime
+  cantidadKg        Decimal  @map("cantidad_kg") @db.Decimal(10, 2)
+  precioKg          Decimal  @map("precio_kg") @db.Decimal(10, 2)
+  costoTotal        Decimal  @map("costo_total") @db.Decimal(12, 2)
+  variedad          String?
+  proceso           String?
+  altura            String?
+  humedad           Decimal? @db.Decimal(5, 2)
+  codigoLoteInterno String   @unique @map("codigo_lote_interno")
+  observaciones     String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  ordenesTostion OrdenTostion[]
+
+  @@map("compras_pergamino")
+}
+
+enum EstadoOrdenTostion {
+  PENDIENTE
+  EN_PROCESO
+  ENTREGADO
+  CANCELADO
+}
+
+model OrdenTostion {
+  id                String   @id @default(uuid())
+  compraId          String   @map("compra_id")
+  compra            CompraPergamino @relation(fields: [compraId], references: [id])
+  fechaEnvio        DateTime @map("fecha_envio")
+  empresaTostadora  String   @map("empresa_tostadora")
+  cantidadEnviadaKg Decimal  @map("cantidad_enviada_kg") @db.Decimal(10, 2)
+  numeroOrden       String?  @map("numero_orden")
+  costoTostion      Decimal  @map("costo_tostion") @db.Decimal(12, 2)
+  costoMolienda     Decimal? @map("costo_molienda") @db.Decimal(12, 2)
+  costoTransporte   Decimal? @map("costo_transporte") @db.Decimal(12, 2)
+  estado            EstadoOrdenTostion @default(PENDIENTE)
+  fechaEstimada     DateTime? @map("fecha_estimada")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  recepcion RecepcionTostado?
+
+  @@map("ordenes_tostion")
+}
+
+model RecepcionTostado {
+  id                 String   @id @default(uuid())
+  ordenTostionId     String   @unique @map("orden_tostion_id")
+  ordenTostion       OrdenTostion @relation(fields: [ordenTostionId], references: [id])
+  fechaRecepcion     DateTime @map("fecha_recepcion")
+  cantidadRecibidaKg Decimal  @map("cantidad_recibida_kg") @db.Decimal(10, 2)
+  bolsasTotales      Int      @map("bolsas_totales")
+  bolsasAbiertas     Int      @default(0) @map("bolsas_abiertas")
+  bolsasAgotadas     Int      @default(0) @map("bolsas_agotadas")
+  mermaPct           Decimal? @map("merma_pct") @db.Decimal(5, 2)
+  costoRealKg        Decimal? @map("costo_real_kg") @db.Decimal(10, 2)
+  fechaVencimiento   DateTime? @map("fecha_vencimiento")
+  observaciones      String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  eventosEmpaque EventoEmpaque[]
+
+  @@map("recepciones_tostado")
+}
+
+model EventoEmpaque {
+  id                   String   @id @default(uuid())
+  recepcionId          String   @map("recepcion_id")
+  recepcion            RecepcionTostado @relation(fields: [recepcionId], references: [id])
+  fecha                DateTime
+  operario             String?
+  bolsas25kgUsadas     Decimal  @map("bolsas_2_5kg_usadas") @db.Decimal(6, 2)
+  rendimientoEsperadoG Decimal? @map("rendimiento_esperado_g") @db.Decimal(10, 2)
+  rendimientoRealG     Decimal? @map("rendimiento_real_g") @db.Decimal(10, 2)
+  diferenciaPct        Decimal? @map("diferencia_pct") @db.Decimal(5, 2)
+  createdAt            DateTime @default(now())
+
+  lotesProducto LoteProductoTerminado[]
+
+  @@map("eventos_empaque")
+}
+
+enum Presentacion {
+  G125
+  G250
+  G500
+}
+
+enum TipoCafe {
+  MOLIDO
+  GRANO
+}
+
+model LoteProductoTerminado {
+  id                 String   @id @default(uuid())
+  eventoEmpaqueId    String   @map("evento_empaque_id")
+  eventoEmpaque      EventoEmpaque @relation(fields: [eventoEmpaqueId], references: [id])
+  presentacion       Presentacion
+  tipo               TipoCafe
+  cantidadUnidades   Int      @map("cantidad_unidades")
+  cantidadDisponible Int      @map("cantidad_disponible")
+  costoUnitario      Decimal  @map("costo_unitario") @db.Decimal(10, 2)
+  fechaEmpaque       DateTime @map("fecha_empaque")
+  fechaVencimiento   DateTime? @map("fecha_vencimiento")
+  qrCode             String?  @unique @map("qr_code")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  itemsVenta ItemVenta[]
+
+  @@map("lotes_producto_terminado")
+}
+
+enum EstrategiaSalida {
+  FIFO
+  MAS_FRESCO
+}
+
+model ConfigProducto {
+  id               String   @id @default(uuid())
+  presentacion     Presentacion
+  tipo             TipoCafe
+  estrategiaSalida EstrategiaSalida @default(FIFO) @map("estrategia_salida")
+
+  @@unique([presentacion, tipo])
+  @@map("config_productos")
+}
+
+model Cliente {
+  id         String    @id @default(uuid())
+  nombre     String
+  documento  String?
+  empresa    String?
+  telefono   String?
+  correo     String?
+  ciudad     String?
+  direccion  String?
+  cumpleanos DateTime?
+  notas      String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  ventas Venta[]
+
+  @@map("clientes")
+}
+
+enum CanalVenta {
+  TIENDA
+  WHATSAPP
+  INSTAGRAM
+  PAGINA_WEB
+  DISTRIBUIDOR
+  EVENTO
+}
+
+enum MetodoPago {
+  EFECTIVO
+  TRANSFERENCIA
+  TARJETA
+  OTRO
+}
+
+model Venta {
+  id             String   @id @default(uuid())
+  clienteId      String   @map("cliente_id")
+  cliente        Cliente  @relation(fields: [clienteId], references: [id])
+  fecha          DateTime
+  canal          CanalVenta
+  metodoPago     MetodoPago @map("metodo_pago")
+  descuentoTotal Decimal  @default(0) @map("descuento_total") @db.Decimal(10, 2)
+  observaciones  String?
+  createdAt      DateTime @default(now())
+
+  items ItemVenta[]
+
+  @@map("ventas")
+}
+
+model ItemVenta {
+  id             String   @id @default(uuid())
+  ventaId        String   @map("venta_id")
+  venta          Venta    @relation(fields: [ventaId], references: [id])
+  loteProductoId String   @map("lote_producto_id")
+  loteProducto   LoteProductoTerminado @relation(fields: [loteProductoId], references: [id])
+  cantidad       Int
+  precioUnitario Decimal  @map("precio_unitario") @db.Decimal(10, 2)
+  subtotal       Decimal  @db.Decimal(10, 2)
+
+  @@map("items_venta")
+}
